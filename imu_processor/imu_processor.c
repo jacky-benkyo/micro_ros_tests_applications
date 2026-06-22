@@ -1,13 +1,18 @@
 // imu_processor.c
 #include "imu_processor.h"
 #include <math.h>
-
+/*
 void imu_init(IMUProcessor *proc, float accel_scale, float gyro_scale, float alpha) {
     proc->alpha = alpha;
     proc->gyro_offset_x = 0.0f;
     proc->gyro_offset_y = 0.0f;
     proc->gyro_offset_z = 0.0f;
     proc->angle_pitch = 0.0f;
+}
+*/
+void imu_init(IMUProcessor *proc, float alpha)
+ {
+    proc->alpha = alpha;
 }
 
 void imu_set_offsets(IMUProcessor *proc, float ox, float oy, float oz) {

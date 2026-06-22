@@ -6,8 +6,8 @@
 #include <stdbool.h>
 
 typedef struct {
-    float accel_scale;
-    float gyro_scale;
+    //float accel_scale;
+    //float gyro_scale;
     float alpha;
     float gyro_offset_x;
     float gyro_offset_y;

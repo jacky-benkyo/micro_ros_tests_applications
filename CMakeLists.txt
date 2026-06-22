@@ -7,12 +7,24 @@ if(NOT PICO_PLATFORM)
     enable_testing()
     
     # Include GoogleTest or other frameworks
-    find_package(GTest REQUIRED)
+    # Use FetchContent to automatically download and build GoogleTest locally
+    include(FetchContent)
+    FetchContent_Declare(
+      googletest
+      URL https://github.com/google/googletest/archive/refs/heads/main.zip
+      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+      )
     
+    # For Windows MinGW, prevent overriding compiler settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+
     # Run test
     add_executable(run_tests test/test_imu.cpp imu_processor/imu_processor.c)
-    target_link_libraries(run_tests GTest::gtest_main m)
-    
+    target_link_libraries(run_tests gtest_main m)
+
+    target_include_directories(run_tests PRIVATE imu_processor)
+
     include(GoogleTest)
     gtest_discover_tests(run_tests)
 
