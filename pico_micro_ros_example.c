@@ -51,12 +51,6 @@ absolute_time_t last_time;
 // Global instance of the unit-tested processor
 IMUProcessor imu_proc;
 
-//void timer_callback(rcl_timer_t *timer, int64_t last_call_time)
-//{
-//    rcl_ret_t ret = rcl_publish(&publisher, &msg, NULL);
-//    msg.data++;
-//}
-
 // Initialize sensors gy801
 void init_gy801() {
     i2c_init(I2C_PORT, 400 * 1000); // 400kHz 
@@ -122,7 +116,7 @@ void calibrate_gyro() {
     
     // Inject calibrated offsets directly into the tested processor structural state
     imu_set_offsets(&imu_proc, sum_x / samples, sum_y / samples, sum_z / samples);
-    printf("Calibration Done. Offset Y: %.4f\n", my_global_processor.gyro_offset_y);
+    printf("Calibration Done. Offset Y: %.4f\n", imu_proc.gyro_offset_y);
 }
 
 /*
@@ -151,8 +145,13 @@ void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
     read_accel(&ax, &ay, &az);
     read_gyroscope(&gx, &gy, &gz);
     
+    //Execute unit test
      /* Compute quaternion output variables dynamically*/
-    
+    imu_update_pitch(&imu_proc, ax, ay, az, gy, dt);
+   
+    /*Compute quaternion output values using tested logic */
+    imu_get_quaternion(imu_proc.angle_pitch, &msg.orientation.w, &msg.orientation.x, &msg.orientation.y, &msg.orientation.z);
+
     // Pack linear acceleration measurements
     msg.linear_acceleration.x = ax;
     msg.linear_acceleration.y = ay;
@@ -160,7 +159,7 @@ void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
     
     // Pack angular velocity configurations (Converted to rad/s standard units) (ROS 2 Standard: rad/s)
     msg.angular_velocity.x = gx * 0.01745329f;
-    msg.angular_velocity.y = gy_rate * 0.01745329f; // for balancing
+    msg.angular_velocity.y = (gy - imu_proc.gyro_offset_y) * 0.01745329f; // for balancing
     msg.angular_velocity.z = gz * 0.01745329f;
 
     // Switch on the PICOW LED 
@@ -203,7 +202,7 @@ int16_t read_accel_x() {
     uint8_t data[2];
     
     i2c_write_blocking(I2C_PORT, ADXL345_ADDR, &reg, 1, true);
-    //Read 2  bytes (LSB 同 MSB)
+    //Read 2  bytes (LSB AND MSB)
     i2c_read_blocking(I2C_PORT, ADXL345_ADDR, data, 2, false);
     return (int16_t)((data[1] << 8) | data[0]);
 }

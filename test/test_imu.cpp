@@ -24,6 +24,7 @@ extern "C" {
     EXPECT_LT(proc.angle_pitch, 45.0f);
 }
 */
+// Test 1: Complimentary filter tracking step
 TEST(IMUProcessorTest, TestComplementaryFilterPitch) {
     IMUProcessor proc;
     // Accel scale, Gyro scale, Alpha = 0.98
@@ -45,6 +46,34 @@ TEST(IMUProcessorTest, TestComplementaryFilterPitch) {
     EXPECT_LT(proc.angle_pitch, 180.0f);
 }
 
+//Test 2: Verify that dynamic drift calibration offset actually cancels gyro bias
+TEST(IMUProcessorTest, TestDynamicGyroOffsetCancellation) {
+    IMUProcessor proc;
+    imu_init(&proc, 0.98f);
+    
+    //set the seed fo randon number generator 
+    srand(time(NULL));
+    
+    //Generate random drift  +/- 10.0f 
+    float random_drift = ((float)rand() / (float)RAND_MAX) * 20.0f - 10.0f;
+
+    // Inject a random drift dps drift on Y axis gyroscope
+    imu_set_offsets(&proc, 0.0f, random_drift, 0.0f);
+    
+    // Simulate that the hardware reads random drift dps
+    float mock_ax = 0.0f;
+    float mock_ay = 0.0f;
+    float mock_az = 9.80665f;
+    float mock_gy = random_drift; 
+    float dt = 0.05f;
+
+    imu_update_pitch(&proc, mock_ax, mock_ay, mock_az, mock_gy, dt);
+    
+    // Because the bias is canceled out, the output filtered angle MUST remain perfectly 0.0
+    EXPECT_NEAR(proc.angle_pitch, 0.0f, 0.0001f);
+}
+
+// Test 3: Validate identity quaternion conversions
 TEST(IMUProcessorTest, TestQuaternionConversion) {
     float w, x, y, z;
     imu_get_quaternion(0.0f, &w, &x, &y, &z);
