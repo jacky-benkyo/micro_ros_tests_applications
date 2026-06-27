@@ -13,6 +13,8 @@ typedef struct {
     float gyro_offset_y;
     float gyro_offset_z;
     float angle_pitch;
+    float accel_filter_factor; //Low-pass filter coefficients for accelerometer"
+    float last_accel_pitch; //Retrieve last calculated value 
 } IMUProcessor;
 
 /* Initialize the complementary filter states */

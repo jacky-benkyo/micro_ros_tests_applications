@@ -41,13 +41,18 @@ void imu_update_pitch(IMUProcessor *proc, const uint8_t *accel_raw, const uint8_
 
 /* Calculation block */
 void imu_update_pitch(IMUProcessor *proc, float ax, float ay, float az, float gy, float dt) {
-    /* Calculate pitch angle based on accelerometer data */
-    float accel_pitch = atan2f(ax, sqrtf(ay * ay + az * az)) * 57.295f;   
+    // Apply the Exponential Moving Average filter 
+
     
-    /* Remove the calibrated zero-bias drift offset */
+    float smoothed_ax = (proc->accel_filter_factor * ax) + ((1.0f - proc->accel_filter_factor) * proc->last_accel_pitch);
+
+    // Calculate pitch angle based on accelerometer data 
+    float accel_pitch = atan2f(smoothed_ax, sqrtf(ay * ay + az * az)) * 57.295f;   
+    
+    // Remove the calibrated zero-bias drift offset 
     float gy_rate = gy - proc->gyro_offset_y;
     
-    /* Complementary filter formula */
+    // Complementary filter formula 
     proc->angle_pitch = proc->alpha * (proc->angle_pitch + gy_rate * dt) + (1.0f - proc->alpha) * accel_pitch;
 }
 
